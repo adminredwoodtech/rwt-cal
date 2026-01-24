@@ -8,7 +8,7 @@ import { WEBSITE_URL } from "@calcom/lib/constants";
 import { getSafeRedirectUrl } from "@calcom/lib/getSafeRedirectUrl";
 import prisma from "@calcom/prisma";
 
-import { IS_GOOGLE_LOGIN_ENABLED } from "@server/lib/constants";
+import { IS_GOOGLE_LOGIN_ENABLED, IS_HUB_SSO_ENABLED } from "@server/lib/constants";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { req, query } = context;
@@ -90,6 +90,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     props: {
       csrfToken: await getCsrfToken(context),
       isGoogleLoginEnabled: IS_GOOGLE_LOGIN_ENABLED,
+      isHubSsoEnabled: IS_HUB_SSO_ENABLED,
       isSAMLLoginEnabled,
       samlTenantID,
       samlProductID,

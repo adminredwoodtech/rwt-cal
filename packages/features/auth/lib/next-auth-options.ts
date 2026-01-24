@@ -21,6 +21,7 @@ import type { TrackingData } from "@calcom/lib/tracking";
 import { DeploymentRepository } from "@calcom/features/ee/deployment/repositories/DeploymentRepository";
 import createUsersAndConnectToOrg from "@calcom/features/ee/dsync/lib/users/createUsersAndConnectToOrg";
 import ImpersonationProvider from "@calcom/features/ee/impersonation/lib/ImpersonationProvider";
+import HubSsoProvider, { IS_HUB_SSO_ENABLED } from "@calcom/features/auth/lib/HubSsoProvider";
 import { getOrganizationRepository } from "@calcom/features/ee/organizations/di/OrganizationRepository.container";
 import { getOrgFullOrigin, subdomainSuffix } from "@calcom/features/ee/organizations/lib/orgDomains";
 import { clientSecretVerifier, hostedCal, isSAMLLoginEnabled } from "@calcom/features/ee/sso/lib/saml";
@@ -97,6 +98,7 @@ const { client_id: GOOGLE_CLIENT_ID, client_secret: GOOGLE_CLIENT_SECRET } =
   JSON.parse(GOOGLE_API_CREDENTIALS)?.web || {};
 const GOOGLE_LOGIN_ENABLED = process.env.GOOGLE_LOGIN_ENABLED === "true";
 const IS_GOOGLE_LOGIN_ENABLED = !!(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_LOGIN_ENABLED);
+
 const ORGANIZATIONS_AUTOLINK =
   process.env.ORGANIZATIONS_AUTOLINK === "1" || process.env.ORGANIZATIONS_AUTOLINK === "true";
 
@@ -278,6 +280,12 @@ export const CalComCredentialsProvider = CredentialsProvider({
 });
 
 const providers: Provider[] = [CalComCredentialsProvider, ImpersonationProvider];
+
+// Add Hub SSO Provider if configured
+if (IS_HUB_SSO_ENABLED) {
+  providers.push(HubSsoProvider);
+}
+
 type SamlIdpUser = {
   id: number;
   userId: number;
@@ -490,8 +498,14 @@ const mapIdentityProvider = (providerName: string) => {
     case "saml":
       return IdentityProvider.SAML;
     default:
+      // Google uses GOOGLE identity provider (OAuth)
       return IdentityProvider.GOOGLE;
   }
+};
+
+// Check if provider should skip onboarding (SSO providers like Hub SSO)
+const shouldSkipOnboarding = (providerName: string | undefined): boolean => {
+  return providerName === "hub-sso";
 };
 
 export const getOptions = ({
@@ -1159,6 +1173,8 @@ export const getOptions = ({
 
         try {
           const newUsername = orgId ? slugify(orgUsername) : usernameSlug(user.name);
+          // Skip onboarding for SSO providers like Hub SSO
+          const skipOnboarding = shouldSkipOnboarding(account?.provider);
           const newUser = await prisma.user.create({
             data: {
               // Slugify the incoming name and append a few random characters to
@@ -1170,6 +1186,8 @@ export const getOptions = ({
               email: user.email,
               identityProvider: idP,
               identityProviderId: account.providerAccountId,
+              // Auto-complete onboarding for SSO users (Hub SSO)
+              ...(skipOnboarding && { completedOnboarding: true }),
               ...(orgId && {
                 verified: true,
                 organization: { connect: { id: orgId } },

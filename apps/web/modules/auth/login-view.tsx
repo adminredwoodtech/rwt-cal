@@ -46,6 +46,7 @@ export type PageProps = inferSSRProps<typeof getServerSideProps>;
 export default function Login({
   csrfToken,
   isGoogleLoginEnabled,
+  isHubSsoEnabled,
   isSAMLLoginEnabled,
   samlTenantID,
   samlProductID,
