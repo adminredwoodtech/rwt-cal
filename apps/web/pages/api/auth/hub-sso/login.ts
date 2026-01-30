@@ -8,6 +8,9 @@ const log = logger.getSubLogger({ prefix: ["hub-sso-login"] });
 
 const HUB_SSO_SECRET = process.env.HUB_SSO_SECRET;
 
+// Debug: Log whether HUB_SSO_SECRET is set (not the value itself)
+console.log("[hub-sso-login] HUB_SSO_SECRET is set:", !!HUB_SSO_SECRET, "length:", HUB_SSO_SECRET?.length || 0);
+
 /**
  * Hub SSO Login Endpoint
  *
