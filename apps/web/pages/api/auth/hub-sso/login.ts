@@ -6,11 +6,6 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 const log = logger.getSubLogger({ prefix: ["hub-sso-login"] });
 
-const HUB_SSO_SECRET = process.env.HUB_SSO_SECRET;
-
-// Debug: Log whether HUB_SSO_SECRET is set (not the value itself)
-console.log("[hub-sso-login] HUB_SSO_SECRET is set:", !!HUB_SSO_SECRET, "length:", HUB_SSO_SECRET?.length || 0);
-
 /**
  * Hub SSO Login Endpoint
  *
@@ -22,12 +17,17 @@ console.log("[hub-sso-login] HUB_SSO_SECRET is set:", !!HUB_SSO_SECRET, "length:
  * Returns: { url: string }
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
+  // Read env var at request time, not module load time (important for containerized deployments)
+  const hubSsoSecret = process.env.HUB_SSO_SECRET;
+
+  log.info("Hub SSO request received", { hasSecret: !!hubSsoSecret, secretLength: hubSsoSecret?.length || 0 });
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  if (!HUB_SSO_SECRET) {
-    log.error("HUB_SSO_SECRET is not configured");
+  if (!hubSsoSecret) {
+    log.error("hubSsoSecret is not configured");
     return res.status(503).json({ error: "Hub SSO not configured" });
   }
 
@@ -47,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // Validate signature: HMAC-SHA256 of "email:timestamp"
   const expectedSignature = crypto
-    .createHmac("sha256", HUB_SSO_SECRET)
+    .createHmac("sha256", hubSsoSecret)
     .update(`${email}:${timestamp}`)
     .digest("hex");
 
