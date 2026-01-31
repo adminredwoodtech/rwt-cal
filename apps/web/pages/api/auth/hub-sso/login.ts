@@ -1,10 +1,16 @@
 import crypto from "node:crypto";
-import process from "node:process";
+
 import { WEBAPP_URL } from "@calcom/lib/constants";
 import logger from "@calcom/lib/logger";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 const log = logger.getSubLogger({ prefix: ["hub-sso-login"] });
+
+// Use a getter function to prevent Next.js/Turbopack from inlining the env var at build time
+function getHubSsoSecret(): string | undefined {
+  // eslint-disable-next-line turbo/no-undeclared-env-vars
+  return globalThis.process?.env?.HUB_SSO_SECRET;
+}
 
 /**
  * Hub SSO Login Endpoint
@@ -17,8 +23,8 @@ const log = logger.getSubLogger({ prefix: ["hub-sso-login"] });
  * Returns: { url: string }
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
-  // Read env var at request time, not module load time (important for containerized deployments)
-  const hubSsoSecret = process.env.HUB_SSO_SECRET;
+  // Read env var at request time using getter to prevent build-time inlining
+  const hubSsoSecret = getHubSsoSecret();
 
   log.info("Hub SSO request received", { hasSecret: !!hubSsoSecret, secretLength: hubSsoSecret?.length || 0 });
 
