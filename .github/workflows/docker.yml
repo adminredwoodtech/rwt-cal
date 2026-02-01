@@ -17,6 +17,15 @@ jobs:
       packages: write
 
     steps:
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force
+          df -h
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -54,3 +63,4 @@ jobs:
             NEXT_PUBLIC_WEBAPP_URL=https://placeholder.railway.app
             NEXTAUTH_SECRET=build-time-placeholder
             CALENDSO_ENCRYPTION_KEY=build-time-placeholder123
+            HUB_SSO_SECRET=build-time-placeholder-hub-sso-secret
