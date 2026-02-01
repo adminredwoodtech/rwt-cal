@@ -1,5 +1,4 @@
 import crypto from "node:crypto";
-import process from "node:process";
 import { ProfileRepository } from "@calcom/features/profile/repositories/ProfileRepository";
 import logger from "@calcom/lib/logger";
 import { safeStringify } from "@calcom/lib/safeStringify";
@@ -10,9 +9,19 @@ import CredentialsProvider from "next-auth/providers/credentials";
 
 const log = logger.getSubLogger({ prefix: ["hub-sso-provider"] });
 
-const HUB_SSO_SECRET = process.env.HUB_SSO_SECRET;
+// This placeholder gets replaced at container startup by start.sh with the actual secret
+// The string "build-time-placeholder-hub-sso-secret" is searched and replaced via sed
+const HUB_SSO_SECRET_VALUE = "build-time-placeholder-hub-sso-secret";
 
-export const IS_HUB_SSO_ENABLED = !!HUB_SSO_SECRET;
+function getHubSsoSecret(): string | undefined {
+  // Return undefined if still placeholder, otherwise return the replaced value
+  if (HUB_SSO_SECRET_VALUE.startsWith("build-time-placeholder")) {
+    return undefined;
+  }
+  return HUB_SSO_SECRET_VALUE;
+}
+
+export const IS_HUB_SSO_ENABLED = !HUB_SSO_SECRET_VALUE.startsWith("build-time-placeholder");
 
 interface HubSsoCredentials {
   email: string;
@@ -25,7 +34,8 @@ interface HubSsoCredentials {
  * Validate the signature from HappSea Hub
  */
 function validateHubSignature(email: string, timestamp: string, signature: string): boolean {
-  if (!HUB_SSO_SECRET) {
+  const hubSsoSecret = getHubSsoSecret();
+  if (!hubSsoSecret) {
     log.error("HUB_SSO_SECRET is not configured");
     return false;
   }
@@ -40,7 +50,7 @@ function validateHubSignature(email: string, timestamp: string, signature: strin
 
   // Validate signature: HMAC-SHA256 of "email:timestamp"
   const expectedSignature = crypto
-    .createHmac("sha256", HUB_SSO_SECRET)
+    .createHmac("sha256", hubSsoSecret)
     .update(`${email}:${timestamp}`)
     .digest("hex");
 
