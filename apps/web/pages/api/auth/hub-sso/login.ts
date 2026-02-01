@@ -6,10 +6,17 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 const log = logger.getSubLogger({ prefix: ["hub-sso-login"] });
 
-// Use a getter function to prevent Next.js/Turbopack from inlining the env var at build time
+// This placeholder gets replaced at container startup by start.sh with the actual secret
+// The string "build-time-placeholder-hub-sso-secret" is searched and replaced via sed
+const HUB_SSO_SECRET_VALUE = "build-time-placeholder-hub-sso-secret";
+
 function getHubSsoSecret(): string | undefined {
-  // eslint-disable-next-line turbo/no-undeclared-env-vars
-  return globalThis.process?.env?.HUB_SSO_SECRET;
+  // Return undefined if still placeholder (check by prefix), otherwise return the replaced value
+  // We check startsWith because sed replaces ALL occurrences of the placeholder
+  if (HUB_SSO_SECRET_VALUE.startsWith("build-time-placeholder")) {
+    return undefined;
+  }
+  return HUB_SSO_SECRET_VALUE;
 }
 
 /**
