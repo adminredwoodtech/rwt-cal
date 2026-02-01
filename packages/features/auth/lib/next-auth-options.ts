@@ -21,7 +21,7 @@ import type { TrackingData } from "@calcom/lib/tracking";
 import { DeploymentRepository } from "@calcom/features/ee/deployment/repositories/DeploymentRepository";
 import createUsersAndConnectToOrg from "@calcom/features/ee/dsync/lib/users/createUsersAndConnectToOrg";
 import ImpersonationProvider from "@calcom/features/ee/impersonation/lib/ImpersonationProvider";
-import HubSsoProvider, { IS_HUB_SSO_ENABLED } from "@calcom/features/auth/lib/HubSsoProvider";
+import HubSsoProvider from "@calcom/features/auth/lib/HubSsoProvider";
 import { getOrganizationRepository } from "@calcom/features/ee/organizations/di/OrganizationRepository.container";
 import { getOrgFullOrigin, subdomainSuffix } from "@calcom/features/ee/organizations/lib/orgDomains";
 import { clientSecretVerifier, hostedCal, isSAMLLoginEnabled } from "@calcom/features/ee/sso/lib/saml";
@@ -281,10 +281,9 @@ export const CalComCredentialsProvider = CredentialsProvider({
 
 const providers: Provider[] = [CalComCredentialsProvider, ImpersonationProvider];
 
-// Add Hub SSO Provider if configured
-if (IS_HUB_SSO_ENABLED) {
-  providers.push(HubSsoProvider);
-}
+// Always add Hub SSO Provider - the authorize function will check if the secret is configured at runtime
+// We can't check IS_HUB_SSO_ENABLED at build time because the placeholder hasn't been replaced yet
+providers.push(HubSsoProvider);
 
 type SamlIdpUser = {
   id: number;
