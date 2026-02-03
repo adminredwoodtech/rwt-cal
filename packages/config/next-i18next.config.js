@@ -7,7 +7,7 @@ const config = {
     locales: i18n.locale.targets.concat([i18n.locale.source]),
   },
   fallbackLng: {
-    default: ["en"],
+    default: ["es"],
     zh: ["zh-CN"],
   },
   reloadOnPrerender: process.env.NODE_ENV !== "production",
