@@ -45,7 +45,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   <title>HappSea SSO - Redirecting...</title>
 </head>
 <body>
-  <p>Signing you in to Cal.com...</p>
   <form id="ssoForm" method="POST" action="${WEBAPP_URL}/api/auth/callback/hub-sso">
     <input type="hidden" name="email" value="${String(email)}" />
     <input type="hidden" name="name" value="${String(name || "")}" />
