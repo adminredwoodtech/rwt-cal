@@ -47,7 +47,7 @@ export const getLocale = async (
 
   // the code should consist of 2 or 3 lowercase letters
   // the regex underneath is more permissive
-  const testedCode = /^[a-zA-Z]+$/.test(code) ? code : "en";
+  const testedCode = /^[a-zA-Z]+$/.test(code) ? code : i18n.defaultLocale;
 
   // the code should consist of either 2 uppercase letters or 3 digits
   // the regex underneath is more permissive
