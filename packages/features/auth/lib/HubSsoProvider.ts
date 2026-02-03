@@ -14,6 +14,12 @@ const log = logger.getSubLogger({ prefix: ["hub-sso-provider"] });
 const HUB_SSO_SECRET_VALUE = "build-time-placeholder-hub-sso-secret";
 
 function getHubSsoSecret(): string | undefined {
+  // In development, read from environment variable directly
+  if (process.env.HUB_SSO_SECRET) {
+    return process.env.HUB_SSO_SECRET;
+  }
+  
+  // In production, use the replaced placeholder value
   // Return undefined if still placeholder, otherwise return the replaced value
   if (HUB_SSO_SECRET_VALUE.startsWith("build-time-placeholder")) {
     return undefined;

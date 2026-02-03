@@ -11,6 +11,12 @@ const log = logger.getSubLogger({ prefix: ["hub-sso-login"] });
 const HUB_SSO_SECRET_VALUE = "build-time-placeholder-hub-sso-secret";
 
 function getHubSsoSecret(): string | undefined {
+  // In development, read from environment variable directly
+  if (process.env.HUB_SSO_SECRET) {
+    return process.env.HUB_SSO_SECRET;
+  }
+  
+  // In production, use the replaced placeholder value
   // Return undefined if still placeholder (check by prefix), otherwise return the replaced value
   // We check startsWith because sed replaces ALL occurrences of the placeholder
   if (HUB_SSO_SECRET_VALUE.startsWith("build-time-placeholder")) {
